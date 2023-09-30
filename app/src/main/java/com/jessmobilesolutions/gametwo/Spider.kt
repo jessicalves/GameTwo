@@ -6,8 +6,10 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Rect
 import android.util.Log
+import com.jessmobilesolutions.gametwo.utils.Vector2D
+import kotlin.math.PI
 
-class Spider(context: Context, var x: Float, var y: Float) {
+class Spider(context: Context, x: Float, y: Float) {
 
     companion object {
         const val WIDTH = 96
@@ -19,10 +21,11 @@ class Spider(context: Context, var x: Float, var y: Float) {
     private val dst = Rect()
     private val vel = 220.0f
     private var frame = 0
-    private var dir = 0
+    private var dirFrame = 0
     private var animTime = 0f
     private var changeTime = 200.0f;
-
+    private var pos = Vector2D(x, y)
+    private var dir = Vector2D(0f)
     var caught = false
 
     init {
@@ -30,8 +33,7 @@ class Spider(context: Context, var x: Float, var y: Float) {
             val inputStream = context.assets.open("spider.png")
             image = BitmapFactory.decodeStream(inputStream)
             inputStream.close()
-        }
-        catch (e: Exception) {
+        } catch (e: Exception) {
             Log.d("Jogo!", e.localizedMessage)
         }
     }
@@ -41,17 +43,29 @@ class Spider(context: Context, var x: Float, var y: Float) {
         if (animTime > changeTime) {
             animTime = 0f
             frame = if (frame == 3) 0 else frame + 1
-            src.set(frame * WIDTH, dir * HEIGHT, frame * WIDTH + WIDTH, dir * HEIGHT + HEIGHT)
+            src.set(
+                frame * WIDTH,
+                dirFrame * HEIGHT,
+                frame * WIDTH + WIDTH,
+                dirFrame * HEIGHT + HEIGHT
+            )
         }
         if (!caught) {
-            when (dir) {
-                0 -> y += vel * elapsedTime / 1000f
-                1 -> x -= vel * elapsedTime / 1000f
-                2 -> x += vel * elapsedTime / 1000f
-                3 -> y -= vel * elapsedTime / 1000f
+            when (dirFrame) {
+                0 -> dir = Vector2D((PI / 2).toFloat())
+                1 -> dir = Vector2D((PI).toFloat())
+                2 -> dir = Vector2D(0f)
+                3 -> dir = Vector2D((3 * PI / 2).toFloat())
             }
         }
-        dst.set((x - WIDTH/2 * 4).toInt(), (y - HEIGHT/2 * 4).toInt(), (x + WIDTH/2 * 4).toInt(), (y + HEIGHT/2 * 4).toInt())
+        pos += dir * vel * elapsedTime / 1000f
+//        pos.plus(dir * vel * elapsedTime / 1000f) faz a mesma coisa
+        dst.set(
+            (pos.x - WIDTH / 2 * 4).toInt(),
+            (pos.y - HEIGHT / 2 * 4).toInt(),
+            (pos.x + WIDTH / 2 * 4).toInt(),
+            (pos.y + HEIGHT / 2 * 4).toInt()
+        )
     }
 
     fun draw(canvas: Canvas) {
@@ -59,8 +73,7 @@ class Spider(context: Context, var x: Float, var y: Float) {
     }
 
     fun moveTo(x: Float, y: Float) {
-        this.x = x
-        this.y = y
+        pos = Vector2D(x, y)
     }
 
     fun verifyWasCaught(x: Float, y: Float): Boolean {
@@ -78,9 +91,9 @@ class Spider(context: Context, var x: Float, var y: Float) {
     }
 
     fun changeDir() {
-        dir++
-        if (dir > 3) {
-            dir = 0
+        dirFrame++
+        if (dirFrame > 3) {
+            dirFrame = 0
         }
     }
 }
